@@ -1,0 +1,77 @@
+name: Deploy to EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: "Type DEPLOY to confirm EC2 deployment"
+        required: true
+        default: "NO"
+
+jobs:
+  deploy:
+    if: ${{ github.event.inputs.confirm_deploy == 'DEPLOY' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize registry owner
+        id: owner
+        shell: bash
+        run: echo "value=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.api
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.value }}/support-copilot-api:latest
+
+      - name: Build and push Dashboard image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.streamlit
+          push: true
+          tags: ghcr.io/${{ steps.owner.outputs.value }}/support-copilot-dashboard:latest
+
+      - name: Copy compose stack to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.prod.yml,deploy/nginx/default.conf"
+          target: "/home/${{ secrets.EC2_USER }}/support-copilot"
+
+      - name: Restart stack on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.EC2_USER }}/support-copilot
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+            echo "MEM0_API_KEY=${{ secrets.MEM0_API_KEY }}" >> .env
+            echo "APP_ENV=production" >> .env
+            echo "CHROMA_PERSIST_DIR=/data/chroma" >> .env
+            echo "SQLITE_DB_PATH=/data/support_copilot.db" >> .env
+            echo "KNOWLEDGE_BASE_DIR=/app/data/knowledge_base" >> .env
+            echo "API_IMAGE=ghcr.io/${{ steps.owner.outputs.value }}/support-copilot-api:latest" >> .env
+            echo "DASH_IMAGE=ghcr.io/${{ steps.owner.outputs.value }}/support-copilot-dashboard:latest" >> .env
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
