@@ -188,7 +188,7 @@ Stop:
 docker compose down
 ```
 
-## 🛠️ Configuration
+## Configuration
 
 Environment variables from `.env` (copy from `.env.example`):
 
@@ -267,7 +267,7 @@ On next draft generation:
 - Semantic search finds relevant snippets
 - LLM receives snippets as context
 
-## 💾 Data Storage
+## Data Storage
 
 **SQLite** (`./support_copilot.db`):
 - customers, billing, tickets, drafts tables
@@ -278,7 +278,7 @@ On next draft generation:
 - customer_memory collection (conversation history)
 - Persists across restarts
 
-## 🎨 Dashboard
+## Dashboard
 
 **Left:** Ticket queue with priority badges
 **Right:** 4 tabs
@@ -414,7 +414,7 @@ git push origin main
 
 4. When you want a production rollout, run `Deploy to EC2` manually with `confirm_deploy=DEPLOY`.
 
-## 💡 Development Guide
+## Development Guide
 
 ### Running Tests
 
@@ -479,7 +479,7 @@ with right:
     st.write("Content here")
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### "ModuleNotFoundError: No module named 'database'"
 When running scripts, ensure you're in the project root:
@@ -527,14 +527,14 @@ docker compose up --build
 
 This project is production-ready with:
 
-✅ **Testing:** pytest coverage for critical paths
-✅ **Logging:** Structured logs via Python logging
-✅ **Error Handling:** Graceful fallbacks (Ollama down, missing KB)
-✅ **Containerization:** Multi-stage Dockerfile builds, optimized images
-✅ **CI/CD:** GitHub Actions test and validation on every push
-✅ **Deployment:** Infrastructure-as-Code (docker-compose.prod.yml) + automated EC2 provisioning
-✅ **Secrets Management:** GitHub Actions secrets for API keys and SSH
-✅ **Reverse Proxy:** Nginx handles routing and SSL termination (at app level)
+**Testing:** pytest coverage for critical paths
+**Logging:** Structured logs via Python logging
+**Error Handling:** Graceful fallbacks (Ollama down, missing KB)
+**Containerization:** Multi-stage Dockerfile builds, optimized images
+**CI/CD:** GitHub Actions test and validation on every push
+**Deployment:** Infrastructure-as-Code (docker-compose.prod.yml) + automated EC2 provisioning
+**Secrets Management:** GitHub Actions secrets for API keys and SSH
+**Reverse Proxy:** Nginx handles routing and SSL termination (at app level)
 
 For production deployments:
 - Set `APP_ENV=production` in EC2 `.env`
