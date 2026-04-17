@@ -6,19 +6,21 @@ from config import settings
 
 try:
     from langchain_chroma import Chroma
-    from langchain_openai import OpenAIEmbeddings
+    from langchain_ollama import OllamaEmbeddings
 except Exception:  # pragma: no cover
     Chroma = None
-    OpenAIEmbeddings = None
+    OllamaEmbeddings = None
 
 
 class CustomerMemoryStore:
     def __init__(self) -> None:
         self.vectorstore = None
-        self._enabled = bool(settings.openai_api_key and Chroma and OpenAIEmbeddings)
+        self._enabled = bool(Chroma and OllamaEmbeddings)
 
         if self._enabled:
-            embeddings = OpenAIEmbeddings(api_key=settings.openai_api_key)
+            embeddings = OllamaEmbeddings(
+                model=settings.ollama_model,
+            )
             self.vectorstore = Chroma(
                 collection_name="customer_memory",
                 embedding_function=embeddings,

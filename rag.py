@@ -6,11 +6,11 @@ from config import settings
 
 try:
     from langchain_chroma import Chroma
-    from langchain_openai import OpenAIEmbeddings
+    from langchain_ollama import OllamaEmbeddings
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except Exception:  # pragma: no cover
     Chroma = None
-    OpenAIEmbeddings = None
+    OllamaEmbeddings = None
     RecursiveCharacterTextSplitter = None
 
 
@@ -19,10 +19,12 @@ class KnowledgeBaseRetriever:
         self.kb_dir = Path(settings.knowledge_base_dir)
         self.kb_dir.mkdir(parents=True, exist_ok=True)
         self.vectorstore = None
-        self._enabled = bool(settings.openai_api_key and Chroma and OpenAIEmbeddings and RecursiveCharacterTextSplitter)
+        self._enabled = bool(Chroma and OllamaEmbeddings and RecursiveCharacterTextSplitter)
 
         if self._enabled:
-            embeddings = OpenAIEmbeddings(api_key=settings.openai_api_key)
+            embeddings = OllamaEmbeddings(
+                model=settings.ollama_model,
+            )
             self.vectorstore = Chroma(
                 collection_name="support_kb",
                 embedding_function=embeddings,

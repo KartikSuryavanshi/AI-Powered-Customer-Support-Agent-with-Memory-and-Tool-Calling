@@ -4,7 +4,7 @@ A production-ready agentic support copilot that eliminates context switching by 
 
 **Problem it solves:** Support agents waste time jumping between CRM systems, billing platforms, knowledge databases, and email while working on a single ticket. This system brings everything into one place, uses agentic tool-calling to fetch context automatically, and generates contextually aware draft responses using RAG (Retrieval-Augmented Generation) and persistent customer memory.
 
-## 🎯 Key Features
+## Key Features
 
 - **Agentic Tool Calling:** LangChain-powered agent that autonomously fetches customer profiles, billing data, and ticket history
 - **Retrieval-Augmented Generation (RAG):** ChromaDB-backed semantic search across knowledge base documents
@@ -14,7 +14,7 @@ A production-ready agentic support copilot that eliminates context switching by 
 - **Production-Ready:** Docker Compose local stack + GitHub Actions CI/CD + AWS EC2 deployment pipeline
 - **Extensible:** Mock tools for CRM, billing, and ticket history—swap with real APIs
 
-## 📊 How It Works
+## How It Works
 
 ### The Support Agent Flow
 
@@ -55,7 +55,7 @@ User clicks "Generate reply draft" on a ticket
 **Domain Layer:**
 - Models (`models.py`) — Pydantic schemas for type-safe API contracts
 
-## 🔧 Technology Stack
+## Technology Stack
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
@@ -70,7 +70,7 @@ User clicks "Generate reply draft" on a ticket
 | **CI/CD** | GitHub Actions | Test, validate, deploy workflows |
 | **Cloud** | AWS EC2 | Production deployment target |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 .
@@ -254,7 +254,7 @@ POST /drafts/generate
 GET /drafts/{ticket_id}         # Get previous draft
 ```
 
-## 📚 Knowledge Base & RAG
+## Knowledge Base & RAG
 
 Add markdown files to `data/knowledge_base/`:
 ```bash
@@ -523,7 +523,7 @@ docker compose down -v  # Remove volumes
 docker compose up --build
 ```
 
-## 🚀 Production Readiness
+## Production Readiness
 
 This project is production-ready with:
 
@@ -542,63 +542,3 @@ For production deployments:
 - Enable HTTPS with Let's Encrypt on Nginx (not yet automated)
 - Monitor logs and set up alerts
 - Set database backups for SQLite (copy to S3 or EBS snapshot)
-
-## 📈 Scaling Considerations
-
-**Current Limitations:**
-- SQLite is single-writer → fine for <100 concurrent users
-- ChromaDB in-process → fine for knowledge bases <100k docs
-- Single EC2 instance → no auto-scaling
-
-**To scale:**
-1. Replace SQLite with PostgreSQL
-2. Move ChromaDB to managed vector DB (Pinecone, Weaviate)
-3. Use RDS for relational data
-4. Add load balancer (ALB) in front of EC2 ASG
-5. Cache API responses with Redis
-
-## 🤝 Contributing
-
-**Code Style:**
-- Black formatter (Python)
-- Type hints on all functions
-- Docstrings for public methods
-- Pytest for testing
-
-**Before pushing:**
-```bash
-black .
-pytest
-git add .
-git commit -m "feat/fix/docs: ..."
-git push
-```
-
-## 🎓 What You Can Build Next
-
-- Replace mock CRM/billing tools with real APIs
-- Add Mem0 managed memory provider integration
-- Add auth (JWT + RBAC)
-- Add human approval workflow for draft publishing
-- Add monitoring (Prometheus + Grafana + OpenTelemetry)
-- Add email integration for automatic ticket ingestion
-- Add multi-language support with Claude or Gemini
-- Build mobile app that accesses the API
-- Implement feedback loop for draft quality improvement
-
-## 📞 Support
-
-For issues:
-1. Check the Troubleshooting section above
-2. Review GitHub Actions logs
-3. Inspect Docker container logs: `docker compose logs <service>`
-4. Check `.env` configuration
-
-## 📄 License
-
-This project is open source. Modify and use freely.
-
----
-
-**Last Updated:** April 2026
-**Status:** Production Ready ✅
