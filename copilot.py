@@ -10,9 +10,9 @@ from rag import KnowledgeBaseRetriever
 from tools import create_support_tools
 
 try:
-    from langchain_openai import ChatOpenAI
+    from langchain_ollama import ChatOllama
 except Exception:  # pragma: no cover
-    ChatOpenAI = None
+    ChatOllama = None
 
 
 class SupportCopilot:
@@ -34,7 +34,7 @@ class SupportCopilot:
             k=3,
         )
 
-        if settings.openai_api_key and ChatOpenAI:
+        if ChatOllama:
             draft, trace = self._generate_with_llm(ticket, kb_context, memory_context)
         else:
             draft = self._fallback_draft(ticket, kb_context, memory_context)
@@ -64,9 +64,9 @@ class SupportCopilot:
         kb_context: list[str],
         memory_context: list[str],
     ) -> tuple[str, list[dict[str, Any]]]:
-        llm = ChatOpenAI(
-            model=settings.openai_model,
-            api_key=settings.openai_api_key,
+        llm = ChatOllama(
+            model=settings.ollama_model,
+            base_url=settings.ollama_base_url,
             temperature=0.2,
         )
         llm_with_tools = llm.bind_tools(self.tools)

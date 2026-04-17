@@ -62,8 +62,8 @@ User clicks "Generate reply draft" on a ticket
 | **Backend** | FastAPI | REST API framework |
 | **Frontend** | Streamlit | Interactive web dashboard |
 | **AI/LLM** | LangChain | Agentic orchestration |
-| **LLM Provider** | OpenAI (GPT-4o-mini) | Language model |
-| **Vector DB** | ChromaDB | Semantic search for RAG + memory |
+| **LLM Provider** | Ollama (Local Mistral) | Free, runs on your machine (no API key needed) |
+| **Vector DB** | ChromaDB | Semantic search for RAG + memory (local) |
 | **Relational DB** | SQLite | Tickets, customers, billing, drafts |
 | **Containerization** | Docker + Docker Compose | Local and production stacks |
 | **Reverse Proxy** | Nginx | API and dashboard routing |
@@ -121,9 +121,10 @@ User clicks "Generate reply draft" on a ticket
 ## Prerequisites
 
 - Python 3.11+
-- Docker + Docker Compose
-- OpenAI API key (enables LLM draft generation; app gracefully falls back without it)
-- Mem0 API key (optional; reserved for future managed memory integration)
+- Docker + Docker Compose (optional, for containerized setup)
+- **Ollama** (free, local LLM; [install here](https://ollama.ai)) 
+  - After install: `ollama pull mistral` to download the model
+  - Runs on `http://localhost:11434` (no API keys needed!)
 
 ## Quick Start (Local Python)
 
@@ -193,12 +194,41 @@ Environment variables from `.env` (copy from `.env.example`):
 
 ```bash
 APP_ENV=development
-OPENAI_API_KEY=sk-...           # Optional, enables LLM
-OPENAI_MODEL=gpt-4o-mini
-SQLITE_DB_PATH=./support_copilot.db
-CHROMA_PERSIST_DIR=./chroma
+OLLAMA_MODEL=mistral               # Local model (pulled via 'ollama pull mistral')
+OLLAMA_BASE_URL=http://localhost:11434  # Ollama server address
+SQLITE_DB_PATH=./support_copilot.db  # Local database
+CHROMA_PERSIST_DIR=./chroma      # Local vector embeddings
 KNOWLEDGE_BASE_DIR=./data/knowledge_base
 ```
+
+### Ollama Setup (First Time)
+
+1. **Install Ollama:**
+   ```bash
+   # macOS / Windows / Linux
+   # Visit https://ollama.ai and download the installer
+   ```
+
+2. **Start Ollama service:**
+   ```bash
+   ollama serve  # Runs on http://localhost:11434
+   ```
+   (On macOS/Windows, this often runs automatically)
+
+3. **Pull a local model** (new terminal):
+   ```bash
+   ollama pull mistral     # ~4GB, fast (recommended for first time)
+   # OR
+   ollama pull neural-chat # ~4GB, good at dialogue
+   # OR
+   ollama pull orca-mini   # ~2GB, smaller/faster
+   ```
+
+4. **Verify Ollama is running:**
+   ```bash
+   curl http://localhost:11434/api/tags
+   ```
+   Should return: `{"models":[{"name":"mistral:latest",...}]}`
 
 ## API Endpoints
 
@@ -314,7 +344,7 @@ Repository: `KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and
 gh secret set EC2_HOST --body "<your-ec2-public-ip-or-dns>" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 gh secret set EC2_USER --body "ubuntu" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 gh secret set EC2_SSH_KEY --body "$(cat ~/.ssh/<your-private-key-file>)" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
-gh secret set OPENAI_API_KEY --body "<your-openai-api-key>" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
+# Note: Ollama runs locally, so no API keys needed for GitHub Actions!
 gh secret set MEM0_API_KEY --body "<your-mem0-api-key>" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 ```
 
@@ -431,7 +461,7 @@ The tool is automatically:
 
 2. On next draft generation, it will be:
    - Loaded and split into chunks
-   - Embedded with OpenAI embeddings
+   - Embedded with local Ollama model (no API calls)
    - Indexed in ChromaDB
    - Available for RAG search
 
@@ -476,7 +506,7 @@ streamlit run app.py --server.port 8502
 
 ### Draft generation returns empty response
 Possible causes:
-1. OPENAI_API_KEY is not set → app falls back to mock draft (check logs)
+1. Ollama service not running → app falls back to mock draft (verify `curl http://localhost:11434/api/tags`)
 2. Knowledge base is empty → add documents to `data/knowledge_base/`
 3. Customer not found → check ticket's customer_id in database
 
@@ -499,7 +529,7 @@ This project is production-ready with:
 
 ✅ **Testing:** pytest coverage for critical paths
 ✅ **Logging:** Structured logs via Python logging
-✅ **Error Handling:** Graceful fallbacks (no OpenAI key, missing KB)
+✅ **Error Handling:** Graceful fallbacks (Ollama down, missing KB)
 ✅ **Containerization:** Multi-stage Dockerfile builds, optimized images
 ✅ **CI/CD:** GitHub Actions test and validation on every push
 ✅ **Deployment:** Infrastructure-as-Code (docker-compose.prod.yml) + automated EC2 provisioning
