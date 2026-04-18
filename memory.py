@@ -18,14 +18,18 @@ class CustomerMemoryStore:
         self._enabled = bool(Chroma and OllamaEmbeddings)
 
         if self._enabled:
-            embeddings = OllamaEmbeddings(
-                model=settings.ollama_model,
-            )
-            self.vectorstore = Chroma(
-                collection_name="customer_memory",
-                embedding_function=embeddings,
-                persist_directory=settings.chroma_persist_dir,
-            )
+            try:
+                embeddings = OllamaEmbeddings(
+                    model=settings.ollama_model,
+                )
+                self.vectorstore = Chroma(
+                    collection_name="customer_memory",
+                    embedding_function=embeddings,
+                    persist_directory=settings.chroma_persist_dir,
+                )
+            except Exception:
+                self.vectorstore = None
+                self._enabled = False
 
     def add_memory(self, customer_id: str, memory_text: str) -> None:
         if self.vectorstore:

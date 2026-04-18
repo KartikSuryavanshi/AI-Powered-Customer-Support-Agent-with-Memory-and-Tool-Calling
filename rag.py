@@ -22,15 +22,19 @@ class KnowledgeBaseRetriever:
         self._enabled = bool(Chroma and OllamaEmbeddings and RecursiveCharacterTextSplitter)
 
         if self._enabled:
-            embeddings = OllamaEmbeddings(
-                model=settings.ollama_model,
-            )
-            self.vectorstore = Chroma(
-                collection_name="support_kb",
-                embedding_function=embeddings,
-                persist_directory=settings.chroma_persist_dir,
-            )
-            self._ensure_indexed()
+            try:
+                embeddings = OllamaEmbeddings(
+                    model=settings.ollama_model,
+                )
+                self.vectorstore = Chroma(
+                    collection_name="support_kb",
+                    embedding_function=embeddings,
+                    persist_directory=settings.chroma_persist_dir,
+                )
+                self._ensure_indexed()
+            except Exception:
+                self.vectorstore = None
+                self._enabled = False
 
     def _load_source_docs(self) -> list[Document]:
         docs: list[Document] = []
@@ -44,18 +48,22 @@ class KnowledgeBaseRetriever:
     def _ensure_indexed(self) -> None:
         if not self.vectorstore:
             return
-        count = self.vectorstore._collection.count()  # pylint: disable=protected-access
-        if count > 0:
-            return
+        try:
+            count = self.vectorstore._collection.count()  # pylint: disable=protected-access
+            if count > 0:
+                return
 
-        source_docs = self._load_source_docs()
-        if not source_docs:
-            return
+            source_docs = self._load_source_docs()
+            if not source_docs:
+                return
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=650, chunk_overlap=100)
-        chunks = splitter.split_documents(source_docs)
-        ids = [f"kb-{idx}" for idx in range(len(chunks))]
-        self.vectorstore.add_documents(chunks, ids=ids)
+            splitter = RecursiveCharacterTextSplitter(chunk_size=650, chunk_overlap=100)
+            chunks = splitter.split_documents(source_docs)
+            ids = [f"kb-{idx}" for idx in range(len(chunks))]
+            self.vectorstore.add_documents(chunks, ids=ids)
+        except Exception:
+            self.vectorstore = None
+            self._enabled = False
 
     def search(self, query: str, k: int = 4) -> list[str]:
         if self.vectorstore:
