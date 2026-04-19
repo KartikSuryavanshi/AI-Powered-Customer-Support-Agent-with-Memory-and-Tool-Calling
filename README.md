@@ -15,7 +15,7 @@ https://github.com/user-attachments/assets/7b64e404-12e6-4913-9c26-7c75a7ec320c
 
 - **Agentic Tool Calling:** LangChain-powered agent that autonomously fetches customer profiles, billing data, and ticket history
 - **Retrieval-Augmented Generation (RAG):** ChromaDB-backed semantic search across knowledge base documents
-- **Persistent Customer Memory:** Vector-stored memories across sessions for long-term customer context
+- **Persistent Customer Memory:** Real Mem0 integration for hosted long-term memory, with local Chroma fallback
 - **One-Click Draft Generation:** AI generates contextually-aware support responses in seconds
 - **Unified Dashboard:** Streamlit UI shows tickets, drafts, tool traces, knowledge sources, and customer memory in tabs
 - **Production-Ready:** Docker Compose local stack + GitHub Actions CI/CD + AWS EC2 deployment pipeline
@@ -69,7 +69,7 @@ User clicks "Generate reply draft" on a ticket
 | **Backend** | FastAPI | REST API framework |
 | **Frontend** | Streamlit | Interactive web dashboard |
 | **AI/LLM** | LangChain | Agentic orchestration |
-| **LLM Provider** | Ollama (Local Mistral) | Free, runs on your machine (no API key needed) |
+| **LLM Provider** | Groq (`llama-3.1-8b-instant`) | Free API key tier, fast hosted inference |
 | **Vector DB** | ChromaDB | Semantic search for RAG + memory (local) |
 | **Relational DB** | SQLite | Tickets, customers, billing, drafts |
 | **Containerization** | Docker + Docker Compose | Local and production stacks |
@@ -129,9 +129,9 @@ User clicks "Generate reply draft" on a ticket
 
 - Python 3.11+
 - Docker + Docker Compose (optional, for containerized setup)
-- **Ollama** (free, local LLM; [install here](https://ollama.ai)) 
-  - After install: `ollama pull mistral` to download the model
-  - Runs on `http://localhost:11434` (no API keys needed!)
+- **Groq API key** (free tier)
+  - Create one at https://console.groq.com/keys
+  - Set it as `GROQ_API_KEY` in `.env`
 
 ## Quick Start (Local Python)
 
@@ -201,41 +201,38 @@ Environment variables from `.env` (copy from `.env.example`):
 
 ```bash
 APP_ENV=development
-OLLAMA_MODEL=mistral               # Local model (pulled via 'ollama pull mistral')
-OLLAMA_BASE_URL=http://localhost:11434  # Ollama server address
+GROQ_API_KEY=<your-groq-key>
+GROQ_MODEL=llama-3.1-8b-instant
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+MEM0_API_KEY=<your-mem0-key>
 SQLITE_DB_PATH=./support_copilot.db  # Local database
 CHROMA_PERSIST_DIR=./chroma      # Local vector embeddings
 KNOWLEDGE_BASE_DIR=./data/knowledge_base
 ```
 
-### Ollama Setup (First Time)
+### Groq Setup (First Time)
 
-1. **Install Ollama:**
-   ```bash
-   # macOS / Windows / Linux
-   # Visit https://ollama.ai and download the installer
-   ```
+1. Create a free API key at: https://console.groq.com/keys
+2. Add it to `.env`:
+  ```bash
+  GROQ_API_KEY=<your-groq-key>
+  GROQ_MODEL=llama-3.1-8b-instant
+  ```
+3. Install dependencies:
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-2. **Start Ollama service:**
-   ```bash
-   ollama serve  # Runs on http://localhost:11434
-   ```
-   (On macOS/Windows, this often runs automatically)
+### Mem0 Setup (Optional but Recommended)
 
-3. **Pull a local model** (new terminal):
-   ```bash
-   ollama pull mistral     # ~4GB, fast (recommended for first time)
-   # OR
-   ollama pull neural-chat # ~4GB, good at dialogue
-   # OR
-   ollama pull orca-mini   # ~2GB, smaller/faster
-   ```
-
-4. **Verify Ollama is running:**
-   ```bash
-   curl http://localhost:11434/api/tags
-   ```
-   Should return: `{"models":[{"name":"mistral:latest",...}]}`
+1. Create a Mem0 API key in your Mem0 dashboard.
+2. Add it to `.env`:
+  ```bash
+  MEM0_API_KEY=<your-mem0-key>
+  ```
+3. Behavior:
+  - If `MEM0_API_KEY` is set, customer memory read/write goes to Mem0.
+  - If not set (or Mem0 is unavailable), the app automatically falls back to local Chroma memory.
 
 ## API Endpoints
 
@@ -281,8 +278,8 @@ On next draft generation:
 - Seeded on first run
 
 **ChromaDB** (`./chroma/`):
-- support_kb collection (knowledge base embeddings)
-- customer_memory collection (conversation history)
+- support_kb_minilm collection (knowledge base embeddings)
+- customer_memory_minilm collection (conversation history)
 - Persists across restarts
 
 ## Dashboard
@@ -351,7 +348,7 @@ Repository: `KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and
 gh secret set EC2_HOST --body "<your-ec2-public-ip-or-dns>" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 gh secret set EC2_USER --body "ubuntu" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 gh secret set EC2_SSH_KEY --body "$(cat ~/.ssh/<your-private-key-file>)" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
-# Note: Ollama runs locally, so no API keys needed for GitHub Actions!
+gh secret set GROQ_API_KEY --body "<your-groq-api-key>" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 gh secret set MEM0_API_KEY --body "<your-mem0-api-key>" -R KartikSuryavanshi/AI-Powered-Customer-Support-Agent-with-Memory-and-Tool-Calling
 ```
 
@@ -468,7 +465,7 @@ The tool is automatically:
 
 2. On next draft generation, it will be:
    - Loaded and split into chunks
-   - Embedded with local Ollama model (no API calls)
+  - Embedded with sentence-transformers locally
    - Indexed in ChromaDB
    - Available for RAG search
 
@@ -513,7 +510,7 @@ streamlit run app.py --server.port 8502
 
 ### Draft generation returns empty response
 Possible causes:
-1. Ollama service not running → app falls back to mock draft (verify `curl http://localhost:11434/api/tags`)
+1. Missing/invalid `GROQ_API_KEY` → app falls back to mock draft
 2. Knowledge base is empty → add documents to `data/knowledge_base/`
 3. Customer not found → check ticket's customer_id in database
 
@@ -536,7 +533,7 @@ This project is production-ready with:
 
 **Testing:** pytest coverage for critical paths
 **Logging:** Structured logs via Python logging
-**Error Handling:** Graceful fallbacks (Ollama down, missing KB)
+**Error Handling:** Graceful fallbacks (Groq unavailable, missing KB)
 **Containerization:** Multi-stage Dockerfile builds, optimized images
 **CI/CD:** GitHub Actions test and validation on every push
 **Deployment:** Infrastructure-as-Code (docker-compose.prod.yml) + automated EC2 provisioning

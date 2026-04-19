@@ -10,9 +10,9 @@ from rag import KnowledgeBaseRetriever
 from tools import create_support_tools
 
 try:
-    from langchain_ollama import ChatOllama
+    from langchain_groq import ChatGroq
 except Exception:  # pragma: no cover
-    ChatOllama = None
+    ChatGroq = None
 
 
 class SupportCopilot:
@@ -34,8 +34,12 @@ class SupportCopilot:
             k=3,
         )
 
-        if ChatOllama:
-            draft, trace = self._generate_with_llm(ticket, kb_context, memory_context)
+        if ChatGroq and settings.groq_api_key:
+            try:
+                draft, trace = self._generate_with_llm(ticket, kb_context, memory_context)
+            except Exception as exc:
+                draft = self._fallback_draft(ticket, kb_context, memory_context)
+                trace = [{"tool": "llm_fallback", "args": {}, "result": f"Groq unavailable: {exc.__class__.__name__}"}]
         else:
             draft = self._fallback_draft(ticket, kb_context, memory_context)
             trace = []
@@ -64,9 +68,9 @@ class SupportCopilot:
         kb_context: list[str],
         memory_context: list[str],
     ) -> tuple[str, list[dict[str, Any]]]:
-        llm = ChatOllama(
-            model=settings.ollama_model,
-            base_url=settings.ollama_base_url,
+        llm = ChatGroq(
+            model=settings.groq_model,
+            api_key=settings.groq_api_key,
             temperature=0.2,
         )
         llm_with_tools = llm.bind_tools(self.tools)

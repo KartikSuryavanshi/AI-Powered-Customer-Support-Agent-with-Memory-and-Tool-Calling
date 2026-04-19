@@ -3,14 +3,9 @@ services:
     image: ${API_IMAGE}
     env_file:
       - .env
-    environment:
-      # Access host's Ollama service (running on EC2)
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
     volumes:
       - support_data:/data
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   dashboard:
     image: ${DASH_IMAGE}
@@ -18,12 +13,9 @@ services:
       - .env
     environment:
       STREAMLIT_API_BASE_URL: http://api:8000
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
     depends_on:
       - api
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:1.27-alpine

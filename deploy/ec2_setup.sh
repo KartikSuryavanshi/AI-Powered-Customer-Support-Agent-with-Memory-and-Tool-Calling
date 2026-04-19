@@ -19,15 +19,7 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo usermod -aG docker "$USER"
 
-# Install Ollama for local LLM
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Pull default model (mistral)
-ollama pull mistral &
-# This runs in background; docker compose will retry connections to http://localhost:11434
-
 mkdir -p ~/support-copilot/deploy/nginx
 
 echo "EC2 setup complete. Re-login for docker group membership to apply."
-echo "Ollama is installing mistral model in the background..."
-echo "Verify Ollama is ready with: curl http://localhost:11434/api/tags"
+echo "Next: configure GROQ_API_KEY and run docker compose for deployment."

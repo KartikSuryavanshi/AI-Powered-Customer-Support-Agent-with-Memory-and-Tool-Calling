@@ -3,14 +3,13 @@ from pathlib import Path
 from langchain_core.documents import Document
 
 from config import settings
+from embeddings import SentenceTransformerEmbeddings
 
 try:
     from langchain_chroma import Chroma
-    from langchain_ollama import OllamaEmbeddings
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 except Exception:  # pragma: no cover
     Chroma = None
-    OllamaEmbeddings = None
     RecursiveCharacterTextSplitter = None
 
 
@@ -19,15 +18,13 @@ class KnowledgeBaseRetriever:
         self.kb_dir = Path(settings.knowledge_base_dir)
         self.kb_dir.mkdir(parents=True, exist_ok=True)
         self.vectorstore = None
-        self._enabled = bool(Chroma and OllamaEmbeddings and RecursiveCharacterTextSplitter)
+        self._enabled = bool(Chroma and SentenceTransformerEmbeddings and RecursiveCharacterTextSplitter)
 
         if self._enabled:
             try:
-                embeddings = OllamaEmbeddings(
-                    model=settings.ollama_model,
-                )
+                embeddings = SentenceTransformerEmbeddings(settings.embedding_model)
                 self.vectorstore = Chroma(
-                    collection_name="support_kb",
+                    collection_name="support_kb_minilm",
                     embedding_function=embeddings,
                     persist_directory=settings.chroma_persist_dir,
                 )

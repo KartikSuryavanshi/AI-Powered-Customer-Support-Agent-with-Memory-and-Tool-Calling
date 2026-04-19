@@ -5,17 +5,12 @@ services:
       dockerfile: Dockerfile.api
     env_file:
       - .env
-    environment:
-      # Allow access to host's Ollama service
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
     volumes:
       - ./:/app
       - support_data:/app/chroma
     ports:
       - "8000:8000"
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   dashboard:
     build:
@@ -25,7 +20,6 @@ services:
       - .env
     environment:
       STREAMLIT_API_BASE_URL: http://api:8000
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
     volumes:
       - ./:/app
     ports:
@@ -33,8 +27,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:1.27-alpine

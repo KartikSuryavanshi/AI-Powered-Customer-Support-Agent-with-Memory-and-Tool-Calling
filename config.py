@@ -14,8 +14,12 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8000, alias="API_PORT")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
 
-    ollama_model: str = Field(default="mistral", alias="OLLAMA_MODEL")
-    ollama_base_url: str = Field(default="http://localhost:11434", alias="OLLAMA_BASE_URL")
+    groq_api_key: str | None = Field(default=None, alias="GROQ_API_KEY")
+    groq_model: str = Field(default="llama-3.1-8b-instant", alias="GROQ_MODEL")
+    embedding_model: str = Field(
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        alias="EMBEDDING_MODEL",
+    )
     mem0_api_key: str | None = Field(default=None, alias="MEM0_API_KEY")
 
     chroma_persist_dir: str = Field(default="./chroma", alias="CHROMA_PERSIST_DIR")
