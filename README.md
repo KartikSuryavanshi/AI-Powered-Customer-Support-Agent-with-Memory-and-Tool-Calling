@@ -4,6 +4,13 @@ A production-ready agentic support copilot that eliminates context switching by 
 
 **Problem it solves:** Support agents waste time jumping between CRM systems, billing platforms, knowledge databases, and email while working on a single ticket. This system brings everything into one place, uses agentic tool-calling to fetch context automatically, and generates contextually aware draft responses using RAG (Retrieval-Augmented Generation) and persistent customer memory.
 
+<img width="1440" height="778" alt="Screenshot 2026-04-19 at 8 04 12 AM" src="https://github.com/user-attachments/assets/bdda916c-2a28-42fe-81c9-3c386dd3480c" />
+<img width="1440" height="776" alt="Screenshot 2026-04-19 at 8 03 36 AM" src="https://github.com/user-attachments/assets/a4834317-35d6-4c65-a4f1-682131b57655" />
+
+
+https://github.com/user-attachments/assets/7b64e404-12e6-4913-9c26-7c75a7ec320c
+
+
 ## Key Features
 
 - **Agentic Tool Calling:** LangChain-powered agent that autonomously fetches customer profiles, billing data, and ticket history
